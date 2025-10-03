@@ -12,11 +12,11 @@ window = Window(800, 600, "Basic Graphic Engine")
 shader_program = ShaderProgram(window.ctx, '../shaders/basic.vert', '../shaders/basic.frag')
 
 # Camara
-camera = Camera((0, 0, 6), (0, 0, 0), (0, 1, 0), 45, window.width / window.height, 0.1, 100.0)
+camera = Camera((0, 0, 6), (0, 0, 0), (0, 1, 0), 100, window.width / window.height, 0.1, 100.0)
 
 # Objetos
 cube1 = Cube((-2, 0, 0), (0, 45, 0), (1, 1, 1), name="Cube1")
-cube2 = Cube((2, 0, 0), (0, 45, 0), (1, 1, 1), name="Cube2")
+cube2 = Cube((2, 0, 0), (0, 45, 0), (1, .5, 1), name="Cube2")
 
 # Escena
 scene = Scene(window.ctx, camera)
