@@ -12,6 +12,9 @@ class Scene:
         self.camera = camera
         self.model = glm.mat4(1)
         self.time = 0.0  # Inicializar self.time
+        self.time += 0.01
+        self.view = self.camera.get_view_matrix()
+        self.projection = self.camera.get_perspective_matrix()
 
     def add_object(self, obj, shader_program=None):
         self.objects.append(obj)
@@ -19,27 +22,27 @@ class Scene:
 
     def render(self):
         self.time += 0.01
-        view = self.camera.get_view_matrix()
-        projection = self.camera.get_perspective_matrix()
+        
         for obj in self.objects:
-            obj.rotation.y += 1  # Rotar el cubo alrededor del eje Y
-            obj.rotation.x += math.sin(self.time) * 0.01  # Rotar el cubo alrededor del eje X
+            obj.rotation.y += 1.0  # Rotar el objeto en el eje Y
+            obj.rotation.x += 0.5  # Rotar el objeto en el eje X
+            obj.rotation.z += 0.2  # Rotar el objeto en el eje Z
+            
+            obj.position.x += math.sin(self.time) * 0.01
             model = obj.get_model_matrix()
-            mvp = projection * view * model
+            mvp = self.projection * self.view * model
             self.graphics[obj.name].set_uniform("Mvp", mvp)
             self.graphics[obj.name].vao.render()
-            
-    #def render(self):
-        #for obj in self.objects:
-            # Obtener matrices
-            #model = obj.get_model_matrix()
-            #view = self.camera.get_view_matrix()
-            #projection = self.camera.get_perspective_matrix()
-            #mvp = projection * view * model
-            # Enviar la matriz MVP al shader
-            #self.graphics[obj.name].shader_program.set_uniform("Mvp", mvp)
-            # Renderizar el objeto
-            #self.graphics[obj.name].vao.render()
+
+    def on_mouse_click(self, u, v):
+        ray = self.camera.raycast(u, v)
+        
+        for obj in self.objects:
+            if obj.check_hit(ray.origin, ray.direction):
+                if obj.name == "Cube1":
+                    print(f"Le re atinaste al cubito del brian wachin!")
+                else:
+                    print(f"Wachin le pegaste al cubo del juan rescatate ñeri!")
     
     def on_resize(self, width, height):
         self.ctx.viewport = (0, 0, width, height)
