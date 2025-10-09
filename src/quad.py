@@ -50,8 +50,19 @@ class Quad(Model):
             2, 3, 0
         ], dtype="i4")
 
+        self._vertices=vertices
 
         super().__init__(vertices, indices, colors= colors, texcoords=texcoords, normals=normals)
+
+    @property
+    def aabb(self):
+        verts3= self._vertices.reshape(-1,3)
+
+        pts=[self.get_model_matrix() * glm.vec4(v[0], v[1], v[2], 1.0) for v in verts3]
+        xs=[p.x for p in pts]
+        ys=[p.y for p in pts]
+        zs=[p.z for p in pts]
+        return (glm.vec3(min(xs), min(ys), min(zs)), glm.vec3(max(xs), max(ys), max(zs)))   
 
 
     def check_hit(self, origin, direction):
