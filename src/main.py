@@ -11,7 +11,7 @@ import numpy as np
 WIDTH, HEIGHT = 800, 600
 
 #ventanita
-window = Window(WIDTH, HEIGHT,"Basic Graphic Engine by Agus")
+window = Window(WIDTH, HEIGHT,"Basic Graphic Engine by Leo-juli")
 
 #shader
 shader_program = ShaderProgram(window.ctx, 'shaders/basic.vert', 'shaders/basic.frag')
