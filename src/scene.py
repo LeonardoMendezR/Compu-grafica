@@ -1,8 +1,7 @@
-### posiciona una cámara, administra los objetos y sus Graphics (VBO, VAO, ShaderProgram). Realiza transformaciones a los objetos que están en la escena y actualiza sus shaders. También actualiza viewport en on_resize.
-
-import math
 from graphics import Graphics
 import glm
+import math
+from raytracer import RayTracer
 
 class Scene:
     def __init__(self, ctx, camera):
@@ -11,39 +10,56 @@ class Scene:
         self.graphics = {}
         self.camera = camera
         self.model = glm.mat4(1)
-        self.time = 0.0  # Inicializar self.time
-        self.time += 0.01
-        self.view = self.camera.get_view_matrix()
-        self.projection = self.camera.get_perspective_matrix()
+        self.time = 0.0
+        self.view = camera.get_view_matrix()
+        self.projection = camera.get_perspective_matrix()
 
-    def add_object(self, obj, shader_program=None):
-        self.objects.append(obj)
-        self.graphics[obj.name] = Graphics(self.ctx, shader_program, obj.vertices, obj.indices)
+    def add_object(self, model, material):
+        self.objects.append(model)
+        self.graphics[model.name] = Graphics(self.ctx, model, material)
 
     def render(self):
         self.time += 0.01
-        
+
         for obj in self.objects:
-            obj.rotation.y += 1.0  # Rotar el objeto en el eje Y
-            obj.rotation.x += 0.5  # Rotar el objeto en el eje X
-            obj.rotation.z += 0.2  # Rotar el objeto en el eje Z
-            
-            obj.position.x += math.sin(self.time) * 0.01
+            if(obj.name != "Sprite"):
+                obj.rotation += glm.vec3(0.8, 0.6, 0.4)
+
+                obj.position.x += math.sin(self.time) * 0.01
+                obj.position.y += math.cos(self.time) * 0.01
+
             model = obj.get_model_matrix()
             mvp = self.projection * self.view * model
-            self.graphics[obj.name].set_uniform("Mvp", mvp)
-            self.graphics[obj.name].vao.render()
-
+            self.graphics[obj.name].render({'Mvp' : mvp})
+        
     def on_mouse_click(self, u, v):
         ray = self.camera.raycast(u, v)
-        
+
         for obj in self.objects:
             if obj.check_hit(ray.origin, ray.direction):
-                if obj.name == "Cube1":
-                    print(f"Le re atinaste al cubito del brian wachin!")
-                else:
-                    print(f"Wachin le pegaste al cubo del juan rescatate ñeri!")
-    
+                print(f"Golpeaste al objeto {obj.name}")
+
     def on_resize(self, width, height):
         self.ctx.viewport = (0, 0, width, height)
-        self.camera.projection = glm.perspective(glm.radians(45), width / height, 0.1, 100)
+        self.camera.projection = glm.perspective(glm.radians(45), width/height, 0.1, 100.0)
+
+    def start(self):
+        print("Start!")
+
+class RayScene(Scene):
+    def __init__(self, ctx, camera, width, height):
+        super().__init__(ctx, camera)
+        self.raytracer = RayTracer(camera, width, height)
+
+    def start(self):
+        self.raytracer.render_frame(self.objects)
+        if "Sprite" in self.graphics:
+            self.graphics["Sprite"].update_texture("u_texture", self.raytracer.get_texture())
+
+    def render(self):
+        super().render()
+
+    def on_resize(self, width, height):
+        super().on_resize(width, height)
+        self.raytracer = RayTracer(self.camera, width, height)
+        self.start()
