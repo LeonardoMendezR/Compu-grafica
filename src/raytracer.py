@@ -1,4 +1,6 @@
 from texture import Texture
+from shader_program import ComputeShaderProgram
+from bvh import BVH
 
 class RayTracer:
     def __init__(self, camera, width, height):
@@ -6,7 +8,6 @@ class RayTracer:
         self.width = width
         self.height = height
         self.framebuffer = Texture(width=width, height=height, channels_amount=3)
-
         self.camera.set_sky_colors(top=(13, 150, 222), bottom=(181, 224, 242))
 
     def trace_ray(self, ray, objects):
@@ -36,13 +37,17 @@ class RayTracerGPU:
         self.camera = camera
         self.width = width
         self.height = height
-        self.compute_shader = ComputeShaderProgram(self.ctx, "shaders/raytracing.comp")
+        self.compute_shader = ComputeShaderProgram(self.ctx, "../shaders/raytracing.comp")
         self.output_graphics = output_graphics
 
         self.texture_unit = 0
         self.output_texture = Texture("u_texture", self.width, self.height, 4, None, (255, 255, 255, 255))
         self.output_graphics.update_texture("u_texture", self.output_texture.image_data)
         self.output_graphics.bind_to_image("u_texture", self.texture_unit, read=False, write=True)
+        
+        self.compute_shader.set_uniform('cameraPosition', self.camera.position)
+        self.compute_shader.set_uniform('inverseViewMatrix', self.camera.get_inverse_view_matrix())
+        self.compute_shader.set_uniform('fieldOfView', self.camera.fov)
 
     def resize(self, width, height):
         self.width, self.height = width, height
@@ -58,3 +63,13 @@ class RayTracerGPU:
         self.bvh_ssbo=self.bvh_nodes.pack_to_bytes()
         buf_bvh = self.ctx.buffer(self.bvh_ssbo)
         buf_bvh.bind_to_storage_buffer(binding=binding)
+        
+    def run(self):
+        groups_x = (self.width + 15) // 16
+        groups_y = (self.height + 15) // 16
+
+        self.compute_shader.run(groups_x, groups_y, 1)
+        self.ctx.memory_barrier()  # <<< importante para asegurar visibilidad
+        self.ctx.clear(0.0, 0.0, 0.0, 1.0)
+        self.output_graphics.render({"u_texture": self.texture_unit})
+

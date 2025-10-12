@@ -1,3 +1,6 @@
+import numpy as np
+import glm
+
 class Graphics:
     def __init__(self, ctx, model, material):
         self.__ctx = ctx
@@ -7,7 +10,8 @@ class Graphics:
         self.__vbo = self.create_buffers()
         self.__ibo = ctx.buffer(model.indices.tobytes())
         self.__vao = ctx.vertex_array(material.shader_program.prog, [*self.__vbo], self.__ibo)
-        self.__textures = self.load_textures(material.texture_data)
+        
+        self.__textures = self.load_textures(material.textures_data)
 
     def create_buffers(self):
         buffers = []
@@ -31,7 +35,7 @@ class Graphics:
         return textures
 
     def bind_to_image(self, name= "u_texture", unit=0, read=False, write=True):
-        self._textures[name][1].bind_to_image(unit, read, write)
+        self.__textures[name][1].bind_to_image(unit, read, write)
         
     def render(self, uniforms):
         for name, value in uniforms.items():

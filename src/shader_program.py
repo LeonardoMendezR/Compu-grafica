@@ -29,8 +29,6 @@ class ShaderProgram:
                 uniform.write(value.to_bytes())
             elif hasattr(uniform, "value"):
                 uniform.value = value
-        else:
-            print(f"Warning: Uniform '{name}' not found in shader program.")
 
 class ComputeShaderProgram:
     def __init__(self, ctx, compute_shader_path):
@@ -54,5 +52,6 @@ class ComputeShaderProgram:
                 uniform.write(value.to_bytes())
             elif hasattr(uniform, "value"):
                 uniform.value = value
-        else:
-            print(f"Warning: Uniform '{name}' not found in compute shader program.")
+            
+    def run(self, groups_x, groups_y, groups_z):
+        self.prog.run(groups_x, groups_y, groups_z)

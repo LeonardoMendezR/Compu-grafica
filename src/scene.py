@@ -2,6 +2,9 @@ from graphics import Graphics
 import glm
 import math
 from raytracer import RayTracer
+import numpy as np
+from graphics import ComputeGraphics
+from raytracer import RayTracerGPU
 
 class Scene:
     def __init__(self, ctx, camera):
@@ -88,6 +91,7 @@ class RaySceneGPU(Scene):
         self.models_f= np.zeros((n,16), dtype='f4')
         self.inv_f= np.zeros((n,16), dtype='f4')
         self.mats_f= np.zeros((n,4), dtype='f4')
+        
         self._update_matrix()
         self._matrix_to_ssbo()
 
@@ -97,9 +101,11 @@ class RaySceneGPU(Scene):
             if obj.animated:
                 obj.rotation += glm.vec3(0.8, 0.6, 0.4)
                 obj.position.x += math.sin(self.time) * 0.01
+                
         if(self.raytracer is not None):
             self._update_matrix()
             self._matrix_to_ssbo()
+            self.raytracer.run()
    
     def on_resize(self, width, height):
         super().on_resize(width, height)
