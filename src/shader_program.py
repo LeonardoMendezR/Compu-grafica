@@ -1,6 +1,6 @@
-### se encarga de cargar los shaders vertex y fragment (en este caso) en el Program de ModernGL. Permite también actualizar los valores de los uniforms de los shaders.
+from moderngl import Attribute, Uniform
+import glm
 
-# Carga de shaders
 class ShaderProgram:
     def __init__(self, ctx, vertex_shader_path, fragment_shader_path):
         with open(vertex_shader_path) as file:
@@ -9,8 +9,49 @@ class ShaderProgram:
             fragment_shader = file.read()
         self.prog = ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)
 
+        attributes =[]
+        uniforms = []
+
+        for name in self.prog:
+            member = self.prog[name]
+            if type(member) is Attribute:
+                attributes.append(name)
+            if type(member) is Uniform:
+                uniforms.append(name)
+        
+        self.attributes = list(attributes)
+        self.uniforms = uniforms
+
     def set_uniform(self, name, value):
-        if name in self.prog:
-            self.prog[name].write(value.to_bytes())
-        else:
-            print(f"Warning: Uniform '{name}' not found in shader program.")
+        if name in self.uniforms:
+            uniform = self.prog[name]
+            if isinstance(value, glm.mat4):
+                uniform.write(value.to_bytes())
+            elif hasattr(uniform, "value"):
+                uniform.value = value
+
+class ComputeShaderProgram:
+    def __init__(self, ctx, compute_shader_path):
+        with open(compute_shader_path) as file:
+            compute_shader = file.read()
+        self.prog = ctx.compute_shader(compute_shader)
+
+        uniforms = []
+
+        for name in self.prog:
+            member = self.prog[name]
+            if type(member) is Uniform:
+                uniforms.append(name)
+        
+        self.uniforms = uniforms
+
+    def set_uniform(self, name, value):
+        if name in self.uniforms:
+            uniform = self.prog[name]
+            if isinstance(value, glm.mat4):
+                uniform.write(value.to_bytes())
+            elif hasattr(uniform, "value"):
+                uniform.value = value
+            
+    def run(self, groups_x, groups_y, groups_z):
+        self.prog.run(groups_x, groups_y, groups_z)
